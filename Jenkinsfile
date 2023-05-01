@@ -1,30 +1,34 @@
-pipeline {
-    agent { label 'dev-agent' }
+pipeline{
+    agent{ label 'dev_agent' }
     
     stages{
-        stage('Code'){
+        stage('code'){
             steps {
-                git url: 'https://github.com/LondheShubham153/node-todo-cicd.git', branch: 'master'
-            }
-        }
-        stage('Build and Test'){
-            steps {
-                sh 'docker build . -t trainwithshubham/node-todo-app-cicd:latest' 
-            }
-        }
-        stage('Login and Push Image'){
-            steps {
-                echo 'logging in to docker hub and pushing image..'
-                withCredentials([usernamePassword(credentialsId:'dockerHub',passwordVariable:'dockerHubPassword', usernameVariable:'dockerHubUser')]) {
-                    sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-                    sh "docker push trainwithshubham/node-todo-app-cicd:latest"
+                script{
+                    properties([pipelineTriggers([pollSCM('')])])
                 }
+                git url: 'https://github.com/uzair3399/node-todo-cicd.git', branch: 'master'
             }
         }
+        stage('Build and test'){
+            steps {
+               sh "docker build . -t uzairbagwan/note-todo-app-cicd:latest"
+            }
+        } 
+        stage('login and Push Image'){
+            steps {
+               echo "logging into docker-hub and pushing"
+               withCredentials([usernamePassword(credentialsId:'dockerhub',passwordVariable:'dockerhubPassword',usernameVariable:'dockerhubUser')]){
+                   sh "docker login -u ${env.dockerhubUser} -p ${env.dockerhubPassword}"
+                   sh "docker push uzairbagwan/note-todo-app-cicd:latest"
+            }   
+        }
+             
+    }    
         stage('Deploy'){
             steps {
-                sh 'docker-compose down && docker-compose up -d'
+                sh "docker-compose down && docker-compose up -d"
             }
         }
-    }
+    }        
 }
